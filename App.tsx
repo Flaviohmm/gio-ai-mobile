@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  StyleSheet,
   Text,
   View,
   ScrollView,
@@ -14,11 +13,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
-
-// Ícones simulados com emojis (no projeto real, use @expo/vector-icons)
-const FeatureIcon = ({ emoji }: { emoji: string }) => (
-  <Text style={styles.featureIcon}>{emoji}</Text>
-);
+import tw from 'twrnc';
 
 interface Feature {
   emoji: string;
@@ -133,33 +128,46 @@ export default function App() {
 
   if (currentScreen === 'editor') {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={tw`flex-1`}>
         <StatusBar barStyle="light-content" />
         <LinearGradient
           colors={['#667eea', '#764ba2', '#f093fb']}
-          style={styles.editorContainer}
+          style={tw`flex-1`}
         >
-          <ScrollView contentContainerStyle={styles.editorScroll}>
-            <View style={styles.editorHeader}>
-              <TouchableOpacity onPress={resetEditor} style={styles.backButton}>
-                <Text style={styles.backButtonText}>← Voltar</Text>
+          <ScrollView style={tw`flex-1 px-5 pb-10`}>
+            {/* Header */}
+            <View style={tw`flex-row items-center mb-6 mt-2`}>
+              <TouchableOpacity onPress={resetEditor} style={tw`p-2`}>
+                <Text style={tw`text-white text-lg font-semibold`}>← Voltar</Text>
               </TouchableOpacity>
-              <Text style={styles.editorTitle}>Editor de IA</Text>
+              <Text style={tw`flex-1 text-white text-2xl font-bold text-center mr-16`}>
+                Editor de IA
+              </Text>
             </View>
 
+            {/* Image Preview */}
             {selectedImage && (
-              <View style={styles.imagePreviewContainer}>
-                <Text style={styles.sectionTitle}>Imagem Original</Text>
-                <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+              <View style={tw`mb-6`}>
+                <Text style={tw`text-white text-lg font-bold mb-3`}>
+                  Imagem Original
+                </Text>
+                <Image 
+                  source={{ uri: selectedImage }} 
+                  style={tw`w-full h-80 rounded-2xl`} 
+                  resizeMode='cover'
+                />
               </View>
             )}
 
-            <View style={styles.promptContainer}>
-              <Text style={styles.sectionTitle}>Descreva a transformação</Text>
+            {/* Prompt Input */}
+            <View style={tw`mb-6`}>
+              <Text style={tw`text-white text-lg font-bold mb-3`}>
+                Descreva a transformação
+              </Text>
               <TextInput
-                style={styles.promptInput}
+                style={tw`bg-white/20 rounded-2xl p-4 text-white text-base min-h-30 border border-white/30`}
                 placeholder="Ex: Transforme em estilo artístico impressionista com cores vibrantes..."
-                placeholderTextColor="#999"
+                placeholderTextColor="#ddd"
                 multiline
                 numberOfLines={4}
                 value={prompt}
@@ -167,24 +175,38 @@ export default function App() {
               />
             </View>
 
+            {/* Process Button */}
             <TouchableOpacity
-              style={[styles.processButton, isProcessing && styles.processButtonDisabled]}
+              style={tw`bg-white rounded-full py-4 items-center mb-6 ${
+                isProcessing ? 'opacity-60' : ''
+              }`}
               onPress={processImage}
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color="#667eea" />
               ) : (
-                <Text style={styles.processButtonText}>✨ Processar com IA</Text>
+                <Text style={tw`text-[#667eea] text-lg font-bold`}>
+                  ✨ Processar com IA
+                </Text>
               )}
             </TouchableOpacity>
 
+            {/* Result */}
             {resultImage && !isProcessing && (
-              <View style={styles.resultContainer}>
-                <Text style={styles.sectionTitle}>Resultado</Text>
-                <Image source={{ uri: resultImage }} style={styles.imagePreview} />
-                <TouchableOpacity style={styles.saveButton}>
-                  <Text style={styles.saveButtonText}>💾 Salvar Imagem</Text>
+              <View style={tw`mt-6`}>
+                <Text style={tw`text-white text-lg font-bold mb-3`}>
+                  Resultado
+                </Text>
+                <Image 
+                  source={{ uri: resultImage }} 
+                  style={tw`w-full h-80 rounded-2xl mb-4`}
+                  resizeMode='cover' 
+                />
+                <TouchableOpacity style={tw`bg-white/20 rounded-full py-4 items-center border-2 border-white`}>
+                  <Text style={tw`text-white text-lg font-bold`}>
+                    💾 Salvar Imagem
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -194,52 +216,75 @@ export default function App() {
     );
   }
 
+  // TELA HOME
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={tw`flex-1`}>
       <StatusBar barStyle="light-content" />
       <LinearGradient
         colors={['#667eea', '#764ba2', '#f093fb']}
-        style={styles.container}
+        style={tw`flex-1`}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView style={tw`flex-1 pb-10`}>
           {/* Hero Section */}
-          <View style={styles.hero}>
-            <Text style={styles.heroTitle}>Gio_AI</Text>
-            <Text style={styles.heroSubtitle}>
+          <View style={tw`items-center px-5 pt-16 pb-10`}>
+            <Text style={tw`text-white text-5xl font-bold mb-4`}>
+              Gio AI
+            </Text>
+            <Text style={tw`text-white text-2xl font-semibold text-center mb-3`}>
               Transforme suas fotos com Inteligência Artificial
             </Text>
-            <Text style={styles.heroDescription}>
+            <Text style={tw`text-white/90 text-base text-center`}>
               Troque roupas, mude cenários e aplique estilos artísticos com apenas um prompt
             </Text>
           </View>
 
           {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.primaryButton} onPress={pickImage}>
-              <Text style={styles.primaryButtonText}>📷 Escolher Foto</Text>
+          <View style={tw`px-5 mb-10 gap-3`}>
+            <TouchableOpacity 
+              style={tw`bg-white rounded-full py-4 px-8 items-center shadow-lg`} 
+              onPress={pickImage}
+            >
+              <Text style={tw`text-[#667eea] text-lg font-bold`}>
+                📷 Escolher Foto
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryButton} onPress={takePhoto}>
-              <Text style={styles.secondaryButtonText}>📸 Tirar Foto</Text>
+
+            <TouchableOpacity 
+              style={tw`bg-white/20 rounded-full py-4 px-8 items-center border-2 border-white`} 
+              onPress={takePhoto}
+            >
+              <Text style={tw`text-white text-lg font-bold`}>
+                📸 Tirar Foto
+              </Text>
             </TouchableOpacity>
           </View>
 
           {/* Features Section */}
-          <View style={styles.featuresSection}>
-            <Text style={styles.featuresTitle}>Funcionalidades</Text>
-            <View style={styles.featuresGrid}>
+          <View style={tw`px-5 mb-10`}>
+            <Text style={tw`text-white text-3xl font-bold text-center mb-8`}>
+              Funcionalidades
+            </Text>
+            <View style={tw`gap-4`}>
               {features.map((feature, index) => (
-                <View key={index} style={styles.featureCard}>
-                  <FeatureIcon emoji={feature.emoji} />
-                  <Text style={styles.featureTitle}>{feature.title}</Text>
-                  <Text style={styles.featureDescription}>{feature.description}</Text>
+                <View 
+                  key={index} 
+                  style={tw`bg-white/15 rounded-2xl p-6 border border-white/30`}
+                >
+                  <Text style={tw`text-4xl mb-3`}>{feature.emoji}</Text>
+                  <Text style={tw`text-white text-xl font-bold mb-2`}>
+                    {feature.title}
+                  </Text>
+                  <Text style={tw`text-white/90 text-sm`}>
+                    {feature.description}
+                  </Text>
                 </View>
               ))}
             </View>
           </View>
 
           {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
+          <View style={tw`items-center px-5 pt-5`}>
+            <Text style={tw`text-white/80 text-sm text-center`}>
               Criado por Flavio Macedo • MIT License © 2025
             </Text>
           </View>
@@ -248,217 +293,3 @@ export default function App() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  hero: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 40,
-  },
-  heroTitle: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 16,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  heroSubtitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  heroDescription: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  actionButtons: {
-    paddingHorizontal: 20,
-    marginBottom: 40,
-    gap: 12,
-  },
-  primaryButton: {
-    backgroundColor: '#fff',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 30,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  primaryButtonText: {
-    color: '#667eea',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  secondaryButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 30,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  secondaryButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  featuresSection: {
-    paddingHorizontal: 20,
-    marginBottom: 40,
-  },
-  featuresTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  featuresGrid: {
-    gap: 16,
-  },
-  featureCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 20,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  featureIcon: {
-    fontSize: 40,
-    marginBottom: 12,
-  },
-  featureTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  featureDescription: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
-    lineHeight: 20,
-  },
-  footer: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  footerText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  // Editor Styles
-  editorContainer: {
-    flex: 1,
-  },
-  editorScroll: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  editorHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  backButton: {
-    padding: 8,
-  },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  editorTitle: {
-    flex: 1,
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginRight: 60,
-  },
-  imagePreviewContainer: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 12,
-  },
-  imagePreview: {
-    width: '100%',
-    height: 300,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  promptContainer: {
-    marginBottom: 24,
-  },
-  promptInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 16,
-    padding: 16,
-    color: '#fff',
-    fontSize: 16,
-    minHeight: 120,
-    textAlignVertical: 'top',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  processButton: {
-    backgroundColor: '#fff',
-    paddingVertical: 16,
-    borderRadius: 30,
-    alignItems: 'center',
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  processButtonDisabled: {
-    opacity: 0.6,
-  },
-  processButtonText: {
-    color: '#667eea',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  resultContainer: {
-    marginTop: 24,
-  },
-  saveButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingVertical: 16,
-    borderRadius: 30,
-    alignItems: 'center',
-    marginTop: 16,
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-});

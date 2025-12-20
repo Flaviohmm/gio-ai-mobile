@@ -1,31 +1,41 @@
 {
   "expo": {
-    "name": "GioAI",
-    "slug": "GioAI",
+    "name": "Gio_AI",
+    "slug": "gio-ai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#667eea"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.gio.ai",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Gio_AI precisa acessar suas fotos para edição.",
-        "NSCameraUsageDescription": "Gio_AI precisa acessar a câmera para tirar fotos."
+        "NSPhotoLibraryUsageDescription": "Gio_AI precisa acessar suas fotos para edição com IA.",
+        "NSCameraUsageDescription": "Gio_AI precisa acessar a câmera para capturar fotos."
       }
     },
     "android": {
+      "package": "com.gio.ai",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#667eea"
       },
       "permissions": [
         "CAMERA",
-        "READ_EXTERNAL_STORAGE"
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
       ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     }
   }
 }
