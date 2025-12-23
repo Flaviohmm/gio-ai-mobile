@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
     View,
     Text,
@@ -8,12 +8,12 @@ import {
     TextInput,
     ActivityIndicator,
     Alert,
+    Switch,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import tw from "twrnc";
-import { ReplicateService } from "../services/replicateService";
-import { ImageService } from "../services/imageService";
+import { AIService } from "../services/aiService";
 import { GRADIENT_COLORS } from "../utils/constants";
 
 interface EditorScreenProps {
@@ -30,24 +30,6 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
     const [resultImage, setResultImage] = useState<string | null>(null);
     const [progress, setProgress] = useState('');
 
-    // Testar conexão ao montar
-    useEffect(() => {
-        testAPIConnection();
-    }, []);
-
-    const testAPIConnection = async () => {
-        try {
-            const isConnected = await ReplicateService.testConnection();
-            if (!isConnected) {
-                Alert.alert(
-                    'Aviso',
-                    'Não foi possível conectar à API Replicate. Verifique seu token.'
-                );
-            }
-        } catch (error) {
-            console.log('Connection test skipped');
-        }
-    };
 
     const processImage = async () => {
         if (!prompt.trim()) {
@@ -59,23 +41,13 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
         setProgress('Preparando imagem...');
 
         try {
-            // Converter imagem para base64
-            setProgress('Convertendo imagem...');
-            const base64Image = await ImageService.convertImageToBase64(imageUri);
+            // IMPORTANTE: HuggingFace gratuito não tem img2img
+            // Então sempre geramos uma nova imagem baseada no prompt
+            setProgress('Gerando imagem com IA (5-10s)...');
 
-            console.log('📸 Imagem convertida, tamanho:', base64Image.length);
+            const resultUrl = await AIService.generateImage(prompt);
 
-            // Processar com Replicate (img2img)
-            setProgress('Enviando para IA...');
-            const resultUrl = await ReplicateService.img2img(base64Image, prompt);
-
-            console.log('🎨 URL do resultado:', resultUrl);
-
-            // Baixar imagem resultado
-            setProgress('Baixando resultado...');
-            const localUri = await ImageService.downloadImage(resultUrl);
-
-            setResultImage(localUri);
+            setResultImage(resultUrl);
             setProgress('');
             Alert.alert('Sucesso! 🎉', 'Imagem processada com sucesso!');
         } catch (error: any) {
@@ -83,12 +55,14 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
 
             let errorMessage = 'Falha ao processar imagem.';
 
-            if (error.message.includes('401')) {
-                errorMessage = 'Token da API inválido. Verifique seu REPLICATE_API_TOKEN.';
-            } else if (error.message.includes('timeout')) {
+            if (error.message?.includes('401') || error.message?.includes('403')) {
+                errorMessage = 'Token da API inválido. Verifique seu HF_TOKEN no arquivo .env';
+            } else if (error.message?.includes('timeout')) {
                 errorMessage = 'Processamento demorou muito. Tente novamente.';
-            } else if (error.message.includes('network')) {
-                errorMessage = 'Erro de conexão. Verifique sua internet.';
+            } else if (error.message?.includes('rate limit')) {
+                errorMessage = 'Limite de requisições atingido. Aguarde alguns minutos.';
+            } else if (error.message?.includes('No Inference Provider')) {
+                errorMessage = 'Modelo temporariamente indisponível. Tente novamente em alguns minutos.';
             }
 
             Alert.alert('Erro', errorMessage);
@@ -96,6 +70,11 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
         } finally {
             setIsProcessing(false);
         }
+    };
+
+    const clearResult = () => {
+        setResultImage(null);
+        setPrompt('');
     };
 
     return (
@@ -108,7 +87,11 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
                 <ScrollView style={tw`flex-1 px-5 pb-10`}>
                     {/* Header */}
                     <View style={tw`flex-row items-center mb-6 mt-2`}>
-                        <TouchableOpacity onPress={onBack} style={tw`p-2`}>
+                        <TouchableOpacity
+                            onPress={onBack}
+                            style={tw`p-2`}
+                            disabled={isProcessing}
+                        >
                             <Text style={tw`text-white text-lg font-semibold`}>
                                 ← Voltar
                             </Text>
@@ -118,26 +101,42 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
                         </Text>
                     </View>
 
+                    {/* Provider Info */}
+                    <View style={tw`mb-4 bg-blue-500/20 rounded-2xl p-4 border border-blue-400/30`}>
+                        <Text style={tw`text-white text-sm font-bold mb-1`}>
+                            🤗 HuggingFace - Modelos Gratuitos
+                        </Text>
+                        <Text style={tw`text-white/90 text-xs`}>
+                            FLUX Schnell → SDXL → SD 1.5 (automático)
+                        </Text>
+                        <Text style={tw`text-white/70 text-xs mt-2`}>
+                            💡 Geração pode levar 10-30 segundos
+                        </Text>
+                    </View>
+
                     {/* Original Image */}
                     <View style={tw`mb-6`}>
                         <Text style={tw`text-white text-lg font-bold mb-3`}>
-                            Imagem Original
+                            Imagem de Referência
                         </Text>
                         <Image
                             source={{ uri: imageUri }}
                             style={tw`w-full h-80 rounded-2xl`}
                             resizeMode="cover"
                         />
+                        <Text style={tw`text-white/70 text-xs mt-2 text-center`}>
+                            Use esta imagem como inspiração para seu prompt
+                        </Text>
                     </View>
 
                     {/* Prompt Input */}
                     <View style={tw`mb-6`}>
                         <Text style={tw`text-white text-lg font-bold mb-3`}>
-                            Descreva a transformação
+                            Descreva o que deseja gerar
                         </Text>
                         <TextInput
                             style={tw`bg-white/20 rounded-2xl p-4 text-white text-base min-h-32 border border-white/30`}
-                            placeholder="Ex: Transforme em estilo artístico impressionista com cores vibrantes..."
+                            placeholder="Ex: Um gato astronauta flutuando no espaço, arte digital, altamente detalhado, cores vibrantes..."
                             placeholderTextColor={"#ddd"}
                             multiline
                             numberOfLines={4}
@@ -146,6 +145,30 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
                             textAlignVertical="top"
                             editable={!isProcessing}
                         />
+
+                        {/* Sugestões rápidas */}
+                        <View style={tw`mt-3 flex-row flex-wrap gap-2`}>
+                            <Text style={tw`text-white/70 text-xs w-full mb-1`}>
+                                Sugestões rápidas:
+                            </Text>
+                            {[
+                                "arte digital, 4K",
+                                "estilo cartoon colorido",
+                                "fotorealista",
+                                "pintura a óleo",
+                                "estilo anime",
+                                "cyperpunk neon"
+                            ].map((suggestion, index) => (
+                                <TouchableOpacity
+                                    key={index}
+                                    style={tw`bg-white/10 px-3 py-1.5 rounded-full border border-white/20`}
+                                    onPress={() => setPrompt(prev => prev + (prev ? ', ' : '') + suggestion)}
+                                    disabled={isProcessing}
+                                >
+                                    <Text style={tw`text-white text-xs`}>+ {suggestion}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
                     </View>
 
                     {/* Process Button */}
@@ -166,7 +189,7 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
                             </View>
                         ) : (
                             <Text style={tw`text-[#667eea] text-lg font-bold`}>
-                                ✨ Processar com IA
+                                ✨ Gerar com IA
                             </Text>
                         )}
                     </TouchableOpacity>
@@ -182,13 +205,44 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
                                 style={tw`w-full h-80 rounded-2xl mb-4`}
                                 resizeMode="cover"
                             />
-                            <TouchableOpacity
-                                style={tw`bg-white/20 rounded-full py-4 items-center border-2 border-white`}
-                            >
-                                <Text style={tw`text-white text-lg font-bold`}>
-                                    💾 Salvar Imagem
-                                </Text>
-                            </TouchableOpacity>
+
+                            <View style={tw`flex-row gap-3`}>
+                                <TouchableOpacity
+                                    style={tw`flex-1 bg-white/20 rounded-full py-4 items-center border-2 border-white`}
+                                    onPress={() => {
+                                        Alert.alert(
+                                            'Salvar Imagem',
+                                            'Funcionalidade de salvar será implementada em breve!',
+                                            [{ text: 'OK' }]
+                                        );
+                                    }}
+                                >
+                                    <Text style={tw`text-white text-lg font-bold`}>
+                                        💾 Salvar
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={tw`flex-1 bg-white rounded-full py-4 items-center`}
+                                    onPress={clearResult}
+                                >
+                                    <Text style={tw`text-[#667eea] text-lg font-bold`}>
+                                        🔄 Nova Imagem
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Tips */}
+                    {!resultImage && !isProcessing && (
+                        <View style={tw`mt-4 bg-white/10 rounded-2xl p-4`}>
+                            <Text style={tw`text-white font-bold mb-2`}>💡 Dicas para melhores resultados:</Text>
+                            <Text style={tw`text-white/80 text-sm mb-1`}>• Seja específico e detalhado</Text>
+                            <Text style={tw`text-white/80 text-sm mb-1`}>• Adicione estilo artístico (anime, realista, cartoon)</Text>
+                            <Text style={tw`text-white/80 text-sm mb-1`}>• Mencione qualidade (4k, alta resolução, detalhado)</Text>
+                            <Text style={tw`text-white/80 text-sm mb-1`}>• Use termos em inglês para melhores resultados</Text>
+                            <Text style={tw`text-white/80 text-sm`}>• Tempo de geração: ~5-10 segundos</Text>
                         </View>
                     )}
                 </ScrollView>

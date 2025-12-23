@@ -12,6 +12,7 @@
     "dev:tailwind": "concurrently \"tailwindcss --input input.css --output tailwind.css --no-autoprefixer --watch\" \"tailwind-rn --watch\""
   },
   "dependencies": {
+    "@huggingface/inference": "^4.13.5",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "expo": "~54.0.30",
     "expo-file-system": "^19.0.21",
